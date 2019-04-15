@@ -20,6 +20,7 @@ const paths = {
   themes: "./src/style/themes/*.styl",
   style: "./src/style/flatpickr.styl",
   plugins: "./src/plugins",
+  sampleConfigs: "./src/sampleConfigs",
   l10n: "./src/l10n",
 };
 
@@ -80,7 +81,7 @@ async function buildScripts() {
   }
 }
 
-function buildExtras(folder: "plugins" | "l10n") {
+function buildExtras(folder: "plugins" | "l10n" | "sampleConfigs") {
   return async function(changed_path?: string) {
     const [src_paths, css_paths] = await Promise.all(
       changed_path !== undefined
@@ -183,6 +184,7 @@ async function buildThemes() {
 
 function setupWatchers() {
   watch("./src/plugins", buildExtras("plugins"));
+  watch("./src/sampleConfigs", buildExtras("sampleConfigs"));
   watch("./src/style/*.styl", () => {
     buildStyle();
     buildThemes();
@@ -258,6 +260,7 @@ async function start() {
   buildThemes();
   buildExtras("l10n")();
   buildExtras("plugins")();
+  buildExtras("sampleConfigs")();
 }
 
 start();
