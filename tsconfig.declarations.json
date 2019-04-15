@@ -8,6 +8,7 @@
     "include": [
         "./src/l10n",
         "./src/plugins",
+        "./src/sampleConfigs",
         "./src/types/globals.ts",
         "./src/typings.d.ts"
     ]
