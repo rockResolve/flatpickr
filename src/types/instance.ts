@@ -1,8 +1,6 @@
 import { DateOption, Options, ParsedOptions } from "./options";
 import { Locale, CustomLocale, key as LocaleKey } from "./locale";
 
-import { RevFormat, Formats, TokenRegex } from "../utils/formatting";
-
 export interface Elements {
   element: HTMLElement;
   input: HTMLInputElement;
@@ -50,14 +48,9 @@ export interface Elements {
   pluginElements: Array<Node>;
 }
 
-export interface Formatting {
-  revFormat: RevFormat;
-  formats: Formats;
-  tokenRegex: TokenRegex;
-}
 
 export type Instance = Elements &
-  Formatting & {
+  {
     // Dates
     minRangeDate?: Date;
     maxRangeDate?: Date;
@@ -153,8 +146,15 @@ export interface FlatpickrFn {
   (selector: ArrayLike<Node>, config?: Options): Instance[];
   (selector: string, config?: Options): Instance | Instance[];
   defaultConfig: Partial<ParsedOptions>;
+
+  /** Get current global config i.e. the union of application defaults & global default config.
+   * Used by static parseDate, formatDate as well as new FlatPickr instances */
+  getGlobalConfig: () => ParsedOptions;
   l10ns: { [k in LocaleKey]?: CustomLocale } & { default: Locale };
   localize: (l10n: CustomLocale) => void;
+
+  /** Set global default config. Combined with application defaults to be
+   * used by static parseDate, formatDate as well as new FlatPickr instances */
   setDefaults: (config: Options) => void;
   parseDate: (
     date: DateOption,
