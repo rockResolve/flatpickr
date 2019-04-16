@@ -1,25 +1,25 @@
 import { Plugin } from "../types/options";
 import { Instance } from "types/instance";
 
-function onInputElementValueChanged(event: Event, flatPickr: Instance) {
-    const inputFormat = event.target === flatPickr.altInput
-      ? flatPickr.config.altFormat
-      : flatPickr.config.dateFormat;
-    const newValueStr = (event.target as HTMLInputElement).value;
-    const newValueDate = flatPickr.parseDate(newValueStr, inputFormat);
+function getInputFormat(inputElement: EventTarget | null, flatPickr: Instance) {
+  return inputElement === flatPickr.altInput
+    ? flatPickr.config.altFormat
+    : flatPickr.config.dateFormat;
+}
 
-    if (!newValueDate) {    // Ignore invalid dates
-      return;
-    }
+function onInputElementValueChanged(flatPickr: Instance) {
+    const inputFormat = getInputFormat(flatPickr._input, flatPickr);
+    const newValueDate = flatPickr.parseDate(flatPickr._input.value, inputFormat);
 
-    const pickrDate = flatPickr.latestSelectedDateObj;
+    const oldPickrDate = flatPickr.latestSelectedDateObj;
+    //oldPickrDate can be undefined after binding to nullable
 
-    if (!pickrDate      //can arise from binding to nullable
-      || pickrDate.getTime() !== newValueDate.getTime()) {
+    //Only update if different
+    if ((oldPickrDate ? oldPickrDate.getTime() : undefined)
+      !== (newValueDate ? newValueDate.getTime(): undefined)) {
 
-      flatPickr!.setDate(newValueDate, undefined,
-        inputFormat,
-        true);
+      //Update calendar, value, but not input Element
+      flatPickr.setDate(newValueDate || "", undefined, inputFormat, true);
     }
     return;
 }
@@ -33,20 +33,14 @@ function inputUpdateOnKeysPlugin(): Plugin {
       onReady() {
 
         // When focus lost update flatpickr date
-        fp._input.addEventListener('blur', (event: Event) => {
-          fp.setDate(
-            fp._input.value,
-            true,
-            event.target === fp.altInput
-            ? fp.config.altFormat
-            : fp.config.dateFormat
-          );
-        });
+        fp._input.addEventListener('blur', (event: Event) =>
+          //Invalid dates will set flatPickr widget & value to undefined
+          fp.setDate(fp._input.value, true, getInputFormat(event.target, fp)));
 
         // When input value changes update flatpickr date
         // Relies on flatpickr parseDate handling of partial date strings
         fp._input.addEventListener("input",
-            (event: Event) => onInputElementValueChanged(event, fp));
+            () => onInputElementValueChanged(fp));
 
         fp.loadedPlugins.push("inputUpdateOnKeysPlugin");
       }
