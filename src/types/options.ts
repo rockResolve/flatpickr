@@ -1,6 +1,6 @@
 import {
-  FormatFns, ParseTokenFns, ParseTokenRegexs,
-  defaultFormatFns, defaultParseTokenFns, defaultParseTokenRegexs
+  FormatFns, ParseTokenFns, ParseTokenRegexs, ParseTokenOrders,
+  defaultFormatFns, defaultParseTokenFns, defaultParseTokenRegexs, defaultParseTokenOrders
 } from "./../utils/formatting";
 import { Instance } from "./instance";
 import { CustomLocale, key as LocaleKey, Locale } from "./locale";
@@ -216,13 +216,16 @@ Use it along with "enableTime" to create a time picker. */
   onPreCalendarPosition: Hook | Hook[];
 
   /* A custom datestring parser */
-  parseDate: (date: string, format: string) => Date;
+  parseDate: (date: string, format: string, locale: Locale) => Date;
 
   /* Functions used to parse a string tokens to a date. Preset to support documented tokens */
   parseTokenFns: ParseTokenFns;
 
   /* Regexs used to identify tokens of an input string. Preset to support documented tokens */
   parseTokenRegexs: ParseTokenRegexs;
+
+  /* Order used to order parsing of tokens of an input string. Preset to support documented tokens */
+  parseTokenOrders: ParseTokenOrders;
 
   /* Plugins. See https://chmln.github.io/flatpickr/plugins/ */
   plugins: Plugin[];
@@ -318,6 +321,7 @@ export interface ParsedOptions {
   parseDate?: BaseOptions["parseDate"];
   parseTokenFns: ParseTokenFns;
   parseTokenRegexs: ParseTokenRegexs;
+  parseTokenOrders: ParseTokenOrders;
   plugins: Plugin[];
   position: BaseOptions["position"];
   positionElement?: HTMLElement;
@@ -401,6 +405,7 @@ export const defaults: ParsedOptions = {
   onPreCalendarPosition: [],
   parseTokenFns: defaultParseTokenFns,
   parseTokenRegexs: defaultParseTokenRegexs,
+  parseTokenOrders: defaultParseTokenOrders,
   plugins: [],
   position: "auto",
   positionElement: undefined,

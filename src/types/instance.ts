@@ -142,7 +142,7 @@ export type Instance = Elements &
     _positionCalendar: (customPositionElement?: HTMLElement) => void;
 
     utils: {
-      getDaysInMonth: (month?: number, year?: number) => number;
+      getDaysInMonth: (monthIndex?: number, centuryYear?: number) => number;
     };
   };
 

@@ -347,6 +347,46 @@ describe("flatpickr", () => {
         expect(fp.latestSelectedDateObj).toBeUndefined();
         //To make invalid strings leave flatPickr unchanged, first validate with fp.parseDate()
       });
+
+
+      it('should ignore invalid month numbers', () => {
+        createInstance();
+        //fp.config.dateFormat = "Y-m-d"   default
+
+        fp.setDate("2010-15");
+        //Javascript setMonth allows out of range monthValues
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2010-01-01 00:00").toString());
+      });
+
+      it('should ignore invalid month names', () => {
+        createInstance({ dateFormat: "Y M d"});
+
+        fp.setDate("2012 Xx ");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-01-01 00:00").toString());
+
+        fp.config.dateFormat = "d M Y";
+        fp.setDate("17 Xx 2010");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2010-01-17 00:00").toString());
+      });
+
+      it('should ignore invalid day numbers', () => {
+        createInstance();
+        //fp.config.dateFormat = "Y-m-d"   default
+
+        fp.setDate("2019-04-35");
+        //Javascript setDate allows out of range day values
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-01 00:00").toString());
+
+        fp.config.dateFormat = "d m Y";
+        fp.setDate("35 04 2019");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-01 00:00").toString());
+
+        fp.config.dateFormat = "d m Y";
+        fp.setDate("31 02 2019");
+        //formatDate should use known locale.daysInMonth, and process tokens in significance order
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-02-01 00:00").toString());
+      });
+
     });
 
     describe("time string parser", () => {
