@@ -67,9 +67,9 @@ describe("static Flatpickr", () => {
 
       const fp2 = createInstance();
 
-      expect(fp1.config.dateFormat).toEqual(defaults.dateFormat);
-      expect(FlatPickrFn.getGlobalConfig().dateFormat).toEqual(newDateFormat)
-      expect(fp2.config.dateFormat).toEqual(newDateFormat);
+      expect(fp1.config.dateFormat).toEqual(defaults.dateFormat);             //old instance unchanged
+      expect(FlatPickrFn.getGlobalConfig().dateFormat).toEqual(newDateFormat);//static
+      expect(fp2.config.dateFormat).toEqual(newDateFormat);                   //new instance
 
     });
 
