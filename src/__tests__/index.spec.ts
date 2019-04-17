@@ -293,21 +293,23 @@ describe("flatpickr", () => {
       });
 
 
-      function dontConsoleInvalidDates(fp: Instance) {
+      //allowInput plus input Element input event can trigger setDate() with invalid & partial strings
+      //The following tests reflect expected allowInput use cases
+
+      function dontConsoleWarnInvalidDates(fp: Instance) {
         //TODO When invalid strings are possible (e.g. allowInput), should not console.warn
 
         fp.config.errorHandler = (err) =>   // dont output console.warn to test output
           !err.message.startsWith("Invalid date provided:") && fp.config.errorHandler(err);
       }
 
-      //allowInput plus input Element input event can trigger setDate() with invalid & partial strings
-      it('should ignore completely invalid dates', () => {
+      it('should flag completely invalid dates by setting date as undefined', () => {
         createInstance();
 
         fp.setDate("2019-04-16");           // set initial value
         expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-16 00:00").toString());
 
-        dontConsoleInvalidDates(fp);
+        dontConsoleWarnInvalidDates(fp);
 
         fp.setDate("rubbish");
 
@@ -337,15 +339,18 @@ describe("flatpickr", () => {
         expect(fp.latestSelectedDateObj.toString()).toEqual(new Date( thisYear + "-04-17 00:00").toString());
       });
 
-      it('should ignore invalid years', () => {
+      it('should flag all invalid date parts, by setting date as undefined', () => {
+        // indistingushable from completely invalid date
+        // see above "should flag completely invalid dates by setting date as undefined"
+
         createInstance();
         //fp.config.dateFormat = "Y-m-d"   default
 
-        dontConsoleInvalidDates(fp);
+        dontConsoleWarnInvalidDates(fp);
 
-        fp.setDate("20");
+        fp.setDate("20");             // only date part is year, and it is invalid
         expect(fp.latestSelectedDateObj).toBeUndefined();
-        //To make invalid strings leave flatPickr unchanged, first validate with fp.parseDate()
+        //To make invalid strings leave flatPickr unchanged, only fp.setDate() after valid fp.parseDate()
       });
 
 
@@ -387,6 +392,23 @@ describe("flatpickr", () => {
         expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-02-01 00:00").toString());
       });
 
+
+      it('should allow wrong case month names', () => {
+        createInstance({ dateFormat: "Y M d"});
+
+        fp.setDate("2012 apr");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-04-01 00:00").toString());
+
+        fp.setDate("2013 FEB");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2013-02-01 00:00").toString());
+
+        fp.config.dateFormat = "Y F d";
+        fp.setDate("2012 april");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-04-01 00:00").toString());
+
+        fp.setDate("2013 FEBRUARY");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2013-02-01 00:00").toString());
+      });
     });
 
     describe("time string parser", () => {
