@@ -19,7 +19,7 @@ function onInputElementValueChanged(flatPickr: Instance) {
       !== (newValueDate ? newValueDate.getTime(): undefined)) {
 
       //Update calendar, value, but not input Element
-      flatPickr.setDate(newValueDate || "", undefined, inputFormat, true);
+      flatPickr.setDate(newValueDate || "", true, inputFormat, true);
     }
     return;
 }
