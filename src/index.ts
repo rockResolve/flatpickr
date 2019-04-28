@@ -1931,16 +1931,23 @@ function FlatpickrInstance(
       self.config.enableTime = true;
     }
 
+    // self.config (default) hook arrays can be set with setDefaults.
+    // Avoid them being replaced with userConfig hook arrays by ...
+    //  concating all hooks into userConfig hooks
+    HOOKS.forEach(hookName => {
+      userConfig[hookName] = self.config[hookName].concat(
+        arrayify(userConfig[hookName] || []).map(bindToInstance)
+      );
+    });
+
+    // TODO Consider doing the same for other arrays e.g. plugins
+
     Object.assign(self.config, formats, userConfig);
 
     for (let i = 0; i < boolOpts.length; i++)
       self.config[boolOpts[i]] =
         self.config[boolOpts[i]] === true ||
         self.config[boolOpts[i]] === "true";
-
-    HOOKS.filter(hook => self.config[hook] !== undefined).forEach(hook => {
-      self.config[hook] = arrayify(self.config[hook] || []).map(bindToInstance);
-    });
 
     self.isMobile =
       !self.config.disableMobile &&
@@ -2784,6 +2791,11 @@ flatpickr.localize = (l10n: CustomLocale) => {
 
 /** append config properties. object & array properties are replaced, not appended */
 flatpickr.setDefaults = (config: Options) => {
+  // Ensure hooks are arrays
+  HOOKS.forEach(hookName => {
+    config[hookName] = arrayify(config[hookName] || []);
+  });
+
   flatpickr.defaultConfig = {
     ...flatpickr.defaultConfig,
     ...(config as ParsedOptions),

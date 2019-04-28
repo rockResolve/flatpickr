@@ -131,5 +131,37 @@ describe("static Flatpickr", () => {
       dateParsed = FlatPickrFn.parseDate(dateFormatted, dateFormat2);
       expect(dateParsed).toEqual(inputDate);
     });
+
+    it("should append instance hooks to any static hooks", () => {
+      expect(FlatPickrFn.getStaticConfig().onReady).toEqual([]);
+
+      FlatPickrFn.defaultConfig.animate = false;
+      FlatPickrFn.defaultConfig.closeOnSelect = true;
+      const fp1 = createInstance();
+      expect(fp1.config.onReady).toEqual(defaults.onReady);
+
+      let isOnReadyHookFired = false;
+      const newOnReadyHook = () => {
+        isOnReadyHookFired = true;
+      };
+      FlatPickrFn.setDefaults({ onReady: newOnReadyHook });
+      expect(isOnReadyHookFired).toBe(false);
+
+      let isSecondOnReadyHookFired = false;
+      const secondNewOnReadyHook = () => {
+        isSecondOnReadyHookFired = true;
+      };
+
+      const fp2 = createInstance({ onReady: secondNewOnReadyHook });
+      expect(isOnReadyHookFired).toBe(true);
+      expect(isSecondOnReadyHookFired).toBe(true);
+
+      expect(fp1.config.onReady).toEqual(defaults.onReady); //old instance unchanged
+      expect(FlatPickrFn.getStaticConfig().onReady)
+        .toEqual([newOnReadyHook]);                         //static
+      //expect(fp2.config.onReady)                            new instance
+      //  .toEqual([newOnReadyHook, secondNewOnReadyHook]);   binds functions
+      expect(fp2.config.onReady.length).toEqual(2);         //new instance
+    });
   });
 });
