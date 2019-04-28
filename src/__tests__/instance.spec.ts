@@ -1,4 +1,4 @@
-import { defaults, Options } from './../types/options';
+import { defaults, Options } from "./../types/options";
 import FlatPickrFn from "../index";
 
 FlatPickrFn.defaultConfig.animate = false;
@@ -22,40 +22,38 @@ function createInstance(config?: Options, el?: HTMLElement) {
 }
 
 
-function beforeEachTest() {
-  FlatPickrFn.setDefaults(defaults);
-}
-
-
 describe("static Flatpickr", () => {
-  beforeEach(beforeEachTest);
-
+  beforeEach(() => {
+    FlatPickrFn.setDefaults(defaults);
+  });
 
   describe("date formatting", () => {
     const DEFAULT_FORMAT_1 = "d.m.y H:i:S";
-    //  DEFAULT_FORMAT_2 = "D j F, 'y";
 
-      it(`should format the date with the pattern "${DEFAULT_FORMAT_1}"`, () => {
-        const inputDate = new Date("2019-04-15T16:16:22.585");
-        const RESULT = "15.04.19 16:16:22";
+    it(`should format the date with the pattern "${DEFAULT_FORMAT_1}"`, () => {
+      const inputDate = new Date("2019-04-15T16:16:22.585");
 
-        const dateFormatted = FlatPickrFn.formatDate(new Date(inputDate), DEFAULT_FORMAT_1);
-        expect(dateFormatted).toEqual(RESULT);
-      });
+      const dateFormatted = FlatPickrFn.formatDate(
+        new Date(inputDate),
+        DEFAULT_FORMAT_1
+      );
+      expect(dateFormatted).toEqual("15.04.19 16:16:22");
+    });
   });
 
-  describe("get global config", () => {
+  describe("get static config", () => {
     it("should get defaults", () => {
-      const fpGlobalConfig = FlatPickrFn.getGlobalConfig();
+      const fpGlobalConfig = FlatPickrFn.getStaticConfig();
 
       expect(fpGlobalConfig).toEqual(defaults);
     });
   });
 
-  describe("set global config", () => {
+  describe("set static config", () => {
     it("should update only static & future instances", () => {
-
-      expect(FlatPickrFn.getGlobalConfig().dateFormat).toEqual(defaults.dateFormat)
+      expect(FlatPickrFn.getStaticConfig().dateFormat).toEqual(
+        defaults.dateFormat
+      );
 
       FlatPickrFn.defaultConfig.animate = false;
       FlatPickrFn.defaultConfig.closeOnSelect = true;
@@ -67,29 +65,35 @@ describe("static Flatpickr", () => {
 
       const fp2 = createInstance();
 
-      expect(fp1.config.dateFormat).toEqual(defaults.dateFormat);             //old instance unchanged
-      expect(FlatPickrFn.getGlobalConfig().dateFormat).toEqual(newDateFormat);//static
-      expect(fp2.config.dateFormat).toEqual(newDateFormat);                   //new instance
-
+      expect(fp1.config.dateFormat).toEqual(defaults.dateFormat); //old instance unchanged
+      expect(FlatPickrFn.getStaticConfig().dateFormat)
+        .toEqual(newDateFormat);                                  //static
+      expect(fp2.config.dateFormat).toEqual(newDateFormat);       //new instance
     });
 
     it("should update dateFormat to affect formatDate & parseDate", () => {
       const inputDate = new Date("2019-04-15T16:16:22");
       const newDateFormat = "d M y H:i:S";
 
-      const dateFormatted = FlatPickrFn.formatDate(new Date(inputDate), newDateFormat);
+      const dateFormatted = FlatPickrFn.formatDate(
+        new Date(inputDate),
+        newDateFormat
+      );
       expect(dateFormatted).toEqual("15 Apr 19 16:16:22");
 
-      FlatPickrFn.setDefaults({ dateFormat: newDateFormat});
+      FlatPickrFn.setDefaults({ dateFormat: newDateFormat });
 
-      expect(FlatPickrFn.getGlobalConfig().dateFormat).toEqual(newDateFormat);
+      expect(FlatPickrFn.getStaticConfig().dateFormat).toEqual(newDateFormat);
     });
 
     it("should update token functions to affect formatDate & parseDate", () => {
       const inputDate = new Date("2019-04-15T16:16:22");
       const dateFormat1 = "d m y H:i:S";
 
-      let dateFormatted = FlatPickrFn.formatDate(new Date(inputDate), dateFormat1);
+      let dateFormatted = FlatPickrFn.formatDate(
+        new Date(inputDate),
+        dateFormat1
+      );
       expect(dateFormatted).toEqual("15 04 19 16:16:22");
 
       let dateParsed = FlatPickrFn.parseDate(dateFormatted, dateFormat1);
@@ -100,9 +104,9 @@ describe("static Flatpickr", () => {
       //fpGlobalConfig.formatFns["m"] = (date) =>
       // use FlatPickr.setDefaults instead.
 
-      const fpGlobalConfig = FlatPickrFn.getGlobalConfig();
+      const fpGlobalConfig = FlatPickrFn.getStaticConfig();
 
-      //obscure example. See configs/millisecondFormatConfig for more realistic usage.
+      //obscure example. See configs/millisecondFormatStaticFns for more realistic usage.
       FlatPickrFn.setDefaults({
         formatFns: {
           ...fpGlobalConfig.formatFns,

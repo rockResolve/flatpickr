@@ -42,7 +42,7 @@ function FlatpickrInstance(
   instanceConfig?: Options
 ): Instance {
   const self = {
-    config: flatpickr.getGlobalConfig(),
+    config: flatpickr.getStaticConfig(),
     l10n: English,
   } as Instance;
   self.parseDate = createDateParser({ config: self.config, l10n: self.l10n });
@@ -2749,12 +2749,12 @@ var flatpickr = function(
 /* istanbul ignore next */
 flatpickr.defaultConfig = {};
 
-flatpickr.getGlobalConfig = () => {
+flatpickr.getStaticConfig = () => {
   return {
     ...defaultOptions,
     ...flatpickr.defaultConfig,
   };
-}
+};
 
 flatpickr.l10ns = {
   en: { ...English },
@@ -2762,7 +2762,7 @@ flatpickr.l10ns = {
 };
 
 const rebuildFormatParse = () => {
-  const globalConfig = flatpickr.getGlobalConfig();
+  const globalConfig = flatpickr.getStaticConfig();
 
   flatpickr.parseDate = createDateParser({
     config: globalConfig,
@@ -2772,7 +2772,7 @@ const rebuildFormatParse = () => {
     config: globalConfig,
     l10n: flatpickr.l10ns.default,
   });
-}
+};
 
 flatpickr.localize = (l10n: CustomLocale) => {
   flatpickr.l10ns.default = {
@@ -2782,6 +2782,7 @@ flatpickr.localize = (l10n: CustomLocale) => {
   rebuildFormatParse();
 };
 
+/** append config properties. object & array properties are replaced, not appended */
 flatpickr.setDefaults = (config: Options) => {
   flatpickr.defaultConfig = {
     ...flatpickr.defaultConfig,

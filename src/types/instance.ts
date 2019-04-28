@@ -146,13 +146,13 @@ export interface FlatpickrFn {
   (selector: string, config?: Options): Instance | Instance[];
   defaultConfig: Partial<ParsedOptions>;
 
-  /** Get current global config i.e. the union of application defaults & global default config.
+  /** Get current static config i.e. the union of application defaults & static default config.
    * Used by static parseDate, formatDate as well as new FlatPickr instances */
-  getGlobalConfig: () => ParsedOptions;
+  getStaticConfig: () => ParsedOptions;
   l10ns: { [k in LocaleKey]?: CustomLocale } & { default: Locale };
   localize: (l10n: CustomLocale) => void;
 
-  /** Set global default config. Combined with application defaults to be
+  /** Set static default config. Combined with application defaults to be
    * used by static parseDate, formatDate as well as new FlatPickr instances */
   setDefaults: (config: Options) => void;
   parseDate: (
