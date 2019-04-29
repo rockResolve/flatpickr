@@ -520,7 +520,7 @@ describe("flatpickr", () => {
       expect(fp.selectedDates[0]).not.toBeDefined();
     });
 
-    it("setDate (date, , , doSkipUpdateInputElement)", () => {
+    it("setDate doSkipUpdateInputElement", () => {
       createInstance({
         //allowInput: true,
       });
