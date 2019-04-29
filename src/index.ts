@@ -30,11 +30,7 @@ import {
   duration,
   isBetween,
 } from "./utils/dates";
-import {
-  defaultParseTokenRegexs,
-  monthToStr,
-  getDaysInMonth
-} from "./utils/formatting";
+import { monthToStr, getDaysInMonth } from "./utils/formatting";
 
 import "./utils/polyfills";
 
@@ -2088,13 +2084,6 @@ function FlatpickrInstance(
         ? flatpickr.l10ns[self.config.locale as LocaleKey]
         : undefined),
     };
-
-    //TODO static config should also run this for static parseDate()
-    // Symptoms: 1. until this is run (by creating an instance) static parseDate wont parse any K tokens
-    //           2. once run static parseDate will resolve token K with the last locale's amPM
-    defaultParseTokenRegexs.K = `(${self.l10n.amPM[0]}|${
-      self.l10n.amPM[1]
-    }|${self.l10n.amPM[0].toLowerCase()}|${self.l10n.amPM[1].toLowerCase()})`;
 
     const userConfig = {
       ...instanceConfig,

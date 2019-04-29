@@ -132,6 +132,31 @@ describe("static Flatpickr", () => {
       expect(dateParsed).toEqual(inputDate);
     });
 
+    it("should parse token K using supplied locale", () => {
+      // static parseDate() uses defaultParseTokenRegex K.
+      // Previously defaultParseTokenRegex K was initially set to "". Any time
+      // index.setupLocale() was called (e.g. create a flatpickr instance),
+      // the token was updated with the instance's locale rulls
+
+      // Symptoms:
+      //  1. until an instance was created, static parseDate didnt parse any K tokens
+      //      Only discovered if no flatpickr instance has been created ...
+      //      Have to disable all other tests, including createInstance() tests above.
+      //  2. static parseDate always used the last instance locale to parse token K
+
+      const dateFormat1 = "d m y H:i:S K";
+
+      let dateParsed = FlatPickrFn.parseDate("15 04 19 04:16:22 PM", dateFormat1);
+      expect(dateParsed).toEqual(new Date("2019-04-15T16:16:22"));
+
+      // locale cs uses amPM: ["dop.", "odp."],
+      createInstance({locale: { amPM: ["dop.", "odp."] } as any });
+
+      //test static with default locale
+      dateParsed = FlatPickrFn.parseDate("15 04 19 04:16:22 PM", dateFormat1);
+      expect(dateParsed).toEqual(new Date("2019-04-15T16:16:22"));
+    });
+
     it("should append instance hooks to any static hooks", () => {
       expect(FlatPickrFn.getStaticConfig().onReady).toEqual([]);
 
