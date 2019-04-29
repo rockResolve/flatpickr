@@ -91,14 +91,15 @@ export const defaultParseTokenFns: ParseTokenFns = {
   },
 };
 
-export type ParseTokenRegexs = Record<string, string>;
+export type ParseTokenRegexs = Record<string, string | ((locale: Locale) => string)>;
 export const defaultParseTokenRegexs: ParseTokenRegexs = {
   D: "(\\w+)",
   F: "(\\w+)",
   G: "(\\d\\d|\\d)",
   H: "(\\d\\d|\\d)",
   J: "(\\d\\d|\\d)\\w+",
-  K: "", // locale-dependent, setup on runtime
+  K: (locale) => `(${locale.amPM[0]}|${locale.amPM[1]}`
+                  + `|${locale.amPM[0].toLowerCase()}|${locale.amPM[1].toLowerCase()})`,
   M: "(\\w+)",
   S: "(\\d\\d|\\d)",
   U: "(.+)",

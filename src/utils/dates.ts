@@ -77,7 +77,10 @@ export const createDateParser = ({ config = defaults, l10n = english }) => (
         const escaped = format[i - 1] === "\\" || isBackSlash;
 
         if (config.parseTokenRegexs[token] && !escaped) {
-          regexStr += config.parseTokenRegexs[token];
+          const parseTokenRegex  = config.parseTokenRegexs[token];
+          regexStr += (typeof parseTokenRegex === "function")
+            ? parseTokenRegex(locale) : parseTokenRegex;
+
           const match = new RegExp(regexStr).exec(date);
           if (match && (matched = true)) {
             ops[token !== "Y" ? "push" : "unshift"]({
