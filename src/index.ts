@@ -476,14 +476,10 @@ function FlatpickrInstance(
 
       bind([self.hourElement, self.minuteElement], ["focus", "click"], selText);
 
-      if (self.secondElement !== undefined)
-        bind(
-          self.secondElement,
-          "focus",
-          () => self.secondElement && self.secondElement.select()
-        );
+      if (self.secondElement)
+        bind(self.secondElement, "focus", () => self.secondElement!.select());
 
-      if (self.amPM !== undefined) {
+      if (self.amPM) {
         bind(
           self.amPM,
           "mousedown",
@@ -656,7 +652,7 @@ function FlatpickrInstance(
         if (!customAppend && self.element.parentNode)
           self.element.parentNode.insertBefore(
             self.calendarContainer,
-            self._input.nextSibling
+            self.element.nextSibling
           );
         else if (self.config.appendTo !== undefined)
           self.config.appendTo.appendChild(self.calendarContainer);
@@ -1903,9 +1899,9 @@ function FlatpickrInstance(
 
       if (dateObj !== undefined) {
         self[type === "min" ? "minDateHasTime" : "maxDateHasTime"] =
-          (dateObj as Date).getHours() > 0 ||
-          (dateObj as Date).getMinutes() > 0 ||
-          (dateObj as Date).getSeconds() > 0;
+          dateObj.getHours() > 0 ||
+          dateObj.getMinutes() > 0 ||
+          dateObj.getSeconds() > 0;
       }
 
       if (self.selectedDates) {
