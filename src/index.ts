@@ -31,7 +31,7 @@ import {
   isBetween,
 } from "./utils/dates";
 
-import { tokenRegex, monthToStr } from "./utils/formatting";
+import { defaultParseTokenRegexs, monthToStr } from "./utils/formatting";
 
 import "./utils/polyfills";
 
@@ -42,10 +42,7 @@ function FlatpickrInstance(
   instanceConfig?: Options
 ): Instance {
   const self = {
-    config: {
-      ...defaultOptions,
-      ...flatpickr.defaultConfig,
-    } as ParsedOptions,
+    config: flatpickr.getStaticConfig(),
     l10n: English,
   } as Instance;
   self.parseDate = createDateParser({ config: self.config, l10n: self.l10n });
@@ -214,7 +211,10 @@ function FlatpickrInstance(
       seconds =
         self.secondElement !== undefined
           ? (parseInt(self.secondElement.value, 10) || 0) % 60
-          : 0;
+          : 0,
+      milliseconds = self.millisecondElement
+        ? (parseInt(self.millisecondElement.value, 10) || 0) % 1000
+        : 0;
 
     if (self.amPM !== undefined) {
       hours = ampm2military(hours, self.amPM.textContent as string);
@@ -247,6 +247,9 @@ function FlatpickrInstance(
 
       if (minutes === maxTime.getMinutes())
         seconds = Math.min(seconds, maxTime.getSeconds());
+
+      if (seconds === maxTime.getSeconds())
+        milliseconds = Math.min(milliseconds, maxTime.getMilliseconds());
     }
 
     if (limitMinHours) {
@@ -260,9 +263,12 @@ function FlatpickrInstance(
 
       if (minutes === minTime.getMinutes())
         seconds = Math.max(seconds, minTime.getSeconds());
+
+      if (seconds === minTime.getSeconds())
+        milliseconds = Math.max(milliseconds, minTime.getMilliseconds());
     }
 
-    setHours(hours, minutes, seconds);
+    setHours(hours, minutes, seconds, milliseconds);
   }
 
   /**
@@ -271,7 +277,9 @@ function FlatpickrInstance(
   function setHoursFromDate(dateObj?: Date) {
     const date = dateObj || self.latestSelectedDateObj;
 
-    if (date) setHours(date.getHours(), date.getMinutes(), date.getSeconds());
+    if (date)
+      setHours(date.getHours(), date.getMinutes(), date.getSeconds(),
+        date.getMilliseconds());
   }
 
   function setDefaultHours() {
@@ -309,10 +317,15 @@ function FlatpickrInstance(
    *                 or am-pm gets inferred from config
    * @param {Number} minutes the minutes
    * @param {Number} seconds the seconds (optional)
+   * @param {Number} milliseconds the milliseconds (optional)
    */
-  function setHours(hours: number, minutes: number, seconds: number) {
+  function setHours(hours: number, minutes: number, seconds = 0,
+    milliseconds = 0
+  ) {
     if (self.latestSelectedDateObj !== undefined) {
-      self.latestSelectedDateObj.setHours(hours % 24, minutes, seconds || 0, 0);
+      self.latestSelectedDateObj.setHours( hours % 24, minutes, seconds,
+        milliseconds
+      );
     }
 
     if (!self.hourElement || !self.minuteElement || self.isMobile) return;
@@ -330,6 +343,9 @@ function FlatpickrInstance(
 
     if (self.secondElement !== undefined)
       self.secondElement.value = pad(seconds);
+
+    if (self.millisecondElement)
+      self.millisecondElement.value = pad(milliseconds, 3);
   }
 
   /**
@@ -1669,6 +1685,7 @@ function FlatpickrInstance(
               self.hourElement,
               self.minuteElement,
               self.secondElement,
+              self.millisecondElement,
               self.amPM,
             ] as Node[])
               .concat(self.pluginElements)
@@ -2009,16 +2026,23 @@ function FlatpickrInstance(
       self.config.enableTime = true;
     }
 
+    // self.config (default) hook arrays can be set with setDefaults.
+    // Avoid them being replaced with userConfig hook arrays by ...
+    //  concating all hooks into userConfig hooks
+    HOOKS.forEach(hookName => {
+      userConfig[hookName] = self.config[hookName].concat(
+        arrayify(userConfig[hookName] || []).map(bindToInstance)
+      );
+    });
+
+    // TODO Consider doing the same for other arrays e.g. plugins
+
     Object.assign(self.config, formats, userConfig);
 
     for (let i = 0; i < boolOpts.length; i++)
       self.config[boolOpts[i]] =
         self.config[boolOpts[i]] === true ||
         self.config[boolOpts[i]] === "true";
-
-    HOOKS.filter(hook => self.config[hook] !== undefined).forEach(hook => {
-      self.config[hook] = arrayify(self.config[hook] || []).map(bindToInstance);
-    });
 
     self.isMobile =
       !self.config.disableMobile &&
@@ -2068,7 +2092,10 @@ function FlatpickrInstance(
         : undefined),
     };
 
-    tokenRegex.K = `(${self.l10n.amPM[0]}|${
+    //TODO static config should also run this for static parseDate()
+    // Symptoms: 1. until this is run (by creating an instance) static parseDate wont parse any K tokens
+    //           2. once run static parseDate will resolve token K with the last locale's amPM
+    defaultParseTokenRegexs.K = `(${self.l10n.amPM[0]}|${
       self.l10n.amPM[1]
     }|${self.l10n.amPM[0].toLowerCase()}|${self.l10n.amPM[1].toLowerCase()})`;
 
@@ -2733,6 +2760,7 @@ function FlatpickrInstance(
     const min = parseFloat(input.getAttribute("min")!),
       max = parseFloat(input.getAttribute("max")!),
       step = parseFloat(input.getAttribute("step")!),
+      digits = max.toString().length,
       curValue = parseInt(input.value, 10),
       delta =
         (e as IncrementEvent).delta ||
@@ -2740,7 +2768,7 @@ function FlatpickrInstance(
 
     let newValue = curValue + step * delta;
 
-    if (typeof input.value !== "undefined" && input.value.length === 2) {
+    if (typeof input.value !== "undefined" && input.value.length === digits) {
       const isHourElem = input === self.hourElement,
         isMinuteElem = input === self.minuteElement;
 
@@ -2770,7 +2798,7 @@ function FlatpickrInstance(
           self.l10n.amPM[int(self.amPM.textContent === self.l10n.amPM[0])];
       }
 
-      input.value = pad(newValue);
+      input.value = pad(newValue, digits);
     }
   }
 
@@ -2840,9 +2868,29 @@ var flatpickr = function(
 /* istanbul ignore next */
 flatpickr.defaultConfig = {};
 
+flatpickr.getStaticConfig = () => {
+  return {
+    ...defaultOptions,
+    ...flatpickr.defaultConfig,
+  };
+};
+
 flatpickr.l10ns = {
   en: { ...English },
   default: { ...English },
+};
+
+const rebuildFormatParse = () => {
+  const globalConfig = flatpickr.getStaticConfig();
+
+  flatpickr.parseDate = createDateParser({
+    config: globalConfig,
+    l10n: flatpickr.l10ns.default,
+  });
+  flatpickr.formatDate = createDateFormatter({
+    config: globalConfig,
+    l10n: flatpickr.l10ns.default,
+  });
 };
 
 flatpickr.localize = (l10n: CustomLocale) => {
@@ -2850,12 +2898,21 @@ flatpickr.localize = (l10n: CustomLocale) => {
     ...flatpickr.l10ns.default,
     ...l10n,
   };
+  rebuildFormatParse();
 };
+
+/** append config properties. object & array properties are replaced, not appended */
 flatpickr.setDefaults = (config: Options) => {
+  // Ensure hooks are arrays
+  HOOKS.forEach(hookName => {
+    config[hookName] = arrayify(config[hookName] || []);
+  });
+
   flatpickr.defaultConfig = {
     ...flatpickr.defaultConfig,
     ...(config as ParsedOptions),
   };
+  rebuildFormatParse();
 };
 
 flatpickr.parseDate = createDateParser({});

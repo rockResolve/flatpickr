@@ -1,23 +1,9 @@
 import { Locale } from "../types/locale";
-import {
-  tokenRegex,
-  RevFormatFn,
-  token,
-  revFormat,
-  formats,
-} from "./formatting";
-import { defaults, ParsedOptions } from "../types/options";
+import { ParseTokenFn } from "./formatting";
+import { defaults } from "../types/options";
 import { english } from "../l10n/default";
 
-export interface FormatterArgs {
-  config?: ParsedOptions;
-  l10n?: Locale;
-}
-
-export const createDateFormatter = ({
-  config = defaults,
-  l10n = english,
-}: FormatterArgs) => (
+export const createDateFormatter = ({ config = defaults, l10n = english }) => (
   dateObj: Date,
   frmt: string,
   overrideLocale?: Locale
@@ -31,8 +17,8 @@ export const createDateFormatter = ({
   return frmt
     .split("")
     .map((c, i, arr) =>
-      formats[c as token] && arr[i - 1] !== "\\"
-        ? formats[c as token](dateObj, locale, config)
+      config.formatFns[c] && arr[i - 1] !== "\\"
+        ? config.formatFns[c](dateObj, locale, config)
         : c !== "\\"
         ? c
         : ""
@@ -83,19 +69,19 @@ export const createDateParser = ({ config = defaults, l10n = english }) => (
           : (new Date(new Date().setHours(0, 0, 0, 0)) as Date);
 
       let matched,
-        ops: { fn: RevFormatFn; val: string }[] = [];
+        ops: { fn: ParseTokenFn; val: string }[] = [];
 
       for (let i = 0, matchIndex = 0, regexStr = ""; i < format.length; i++) {
-        const token = format[i] as token;
-        const isBackSlash = (token as string) === "\\";
+        const token = format[i];
+        const isBackSlash = token === "\\";
         const escaped = format[i - 1] === "\\" || isBackSlash;
 
-        if (tokenRegex[token] && !escaped) {
-          regexStr += tokenRegex[token];
+        if (config.parseTokenRegexs[token] && !escaped) {
+          regexStr += config.parseTokenRegexs[token];
           const match = new RegExp(regexStr).exec(date);
           if (match && (matched = true)) {
             ops[token !== "Y" ? "push" : "unshift"]({
-              fn: revFormat[token],
+              fn: config.parseTokenFns[token],
               val: match[++matchIndex],
             });
           }
@@ -141,10 +127,10 @@ export function compareDates(date1: Date, date2: Date, timeless = true) {
  */
 export function compareTimes(date1: Date, date2: Date) {
   return (
-    3600 * (date1.getHours() - date2.getHours()) +
-    60 * (date1.getMinutes() - date2.getMinutes()) +
-    date1.getSeconds() -
-    date2.getSeconds()
+    3600000 * (date1.getHours() - date2.getHours()) +
+    60000 * (date1.getMinutes() - date2.getMinutes()) +
+    1000 * date1.getSeconds() - date2.getSeconds() +
+    date1.getMilliseconds() - date2.getMilliseconds()
   );
 }
 
