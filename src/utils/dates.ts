@@ -127,10 +127,10 @@ export function compareDates(date1: Date, date2: Date, timeless = true) {
  */
 export function compareTimes(date1: Date, date2: Date) {
   return (
-    3600 * (date1.getHours() - date2.getHours()) +
-    60 * (date1.getMinutes() - date2.getMinutes()) +
-    date1.getSeconds() -
-    date2.getSeconds()
+    3600000 * (date1.getHours() - date2.getHours()) +
+    60000 * (date1.getMinutes() - date2.getMinutes()) +
+    1000 * date1.getSeconds() - date2.getSeconds() +
+    date1.getMilliseconds() - date2.getMilliseconds()
   );
 }
 

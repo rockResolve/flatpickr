@@ -106,7 +106,7 @@ describe("static Flatpickr", () => {
 
       const fpGlobalConfig = FlatPickrFn.getStaticConfig();
 
-      //obscure example. See configs/millisecondFormatStaticFns for more realistic usage.
+      //obscure example. See plugins/millisecond/millisecondFormatConfig for more realistic usage.
       FlatPickrFn.setDefaults({
         formatFns: {
           ...fpGlobalConfig.formatFns,
