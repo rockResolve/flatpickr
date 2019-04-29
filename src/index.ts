@@ -30,8 +30,11 @@ import {
   duration,
   isBetween,
 } from "./utils/dates";
-
-import { defaultParseTokenRegexs, monthToStr } from "./utils/formatting";
+import {
+  defaultParseTokenRegexs,
+  monthToStr,
+  getDaysInMonth
+} from "./utils/formatting";
 
 import "./utils/polyfills";
 
@@ -71,11 +74,8 @@ function FlatpickrInstance(
 
   function setupHelperFunctions() {
     self.utils = {
-      getDaysInMonth(month = self.currentMonth, yr = self.currentYear) {
-        if (month === 1 && ((yr % 4 === 0 && yr % 100 !== 0) || yr % 400 === 0))
-          return 29;
-
-        return self.l10n.daysInMonth[month];
+      getDaysInMonth(monthIndex = self.currentMonth, centuryYear = self.currentYear) {
+        return getDaysInMonth(monthIndex, centuryYear, self.l10n);
       },
     };
   }
@@ -849,9 +849,10 @@ function FlatpickrInstance(
     const firstOfMonth =
       (new Date(year, month, 1).getDay() - self.l10n.firstDayOfWeek + 7) % 7;
 
-    const prevMonthDays = self.utils.getDaysInMonth((month - 1 + 12) % 12);
+    // If month = January, prev year will be wrong; but ignored as it is only used to calc Feb days
+    const prevMonthDays = getDaysInMonth((month - 1 + 12) % 12, year, self.l10n);
 
-    const daysInMonth = self.utils.getDaysInMonth(month),
+    const daysInMonth = getDaysInMonth(month, year, self.l10n),
       days = window.document.createDocumentFragment(),
       isMultiMonth = self.config.showMonths > 1,
       prevMonthDayClass = isMultiMonth ? "prevMonthDay hidden" : "prevMonthDay",
@@ -2390,7 +2391,8 @@ function FlatpickrInstance(
   function setDate(
     date: DateOption | DateOption[],
     triggerChange = false,
-    format = self.config.dateFormat
+    format = self.config.dateFormat,
+    doSkipUpdateInputElement = false
   ) {
     if ((date !== 0 && !date) || (date instanceof Array && date.length === 0))
       return self.clear(triggerChange);
@@ -2407,7 +2409,7 @@ function FlatpickrInstance(
     if (self.selectedDates.length === 0) {
       self.clear(false);
     }
-    updateValue(triggerChange);
+    if (!doSkipUpdateInputElement) updateValue(triggerChange);
 
     if (triggerChange) triggerEvent("onChange");
   }

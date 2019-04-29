@@ -10,6 +10,35 @@ export const monthToStr = (
   locale: Locale
 ) => locale.months[shorthand ? "shorthand" : "longhand"][monthNumber];
 
+const monthStrToDate = (
+  monthName: string,
+  shorthand: boolean,
+  locale: Locale,
+  dateObj: Date
+) => {
+  // Handle wrong case of input monthName
+  // Note: Some locales have 1 character shorthand months.
+  if (monthName.length > 1) {
+    monthName =
+      monthName[0].toUpperCase() + monthName.substring(1).toLowerCase();
+  }
+
+  const monthIndex = locale.months[
+    shorthand ? "shorthand" : "longhand"
+  ].indexOf(monthName);
+  if (monthIndex > -1) {
+    dateObj.setMonth(monthIndex);
+  }
+};
+
+export function getDaysInMonth(monthIndex: number, centuryYear: number, locale: Locale) {
+  if (monthIndex === 1 && ((centuryYear % 4 === 0 && centuryYear % 100 !== 0) || centuryYear % 400 === 0))
+    return 29;
+
+  return locale.daysInMonth[monthIndex];
+}
+
+
 export type ParseTokenFn = (
   date: Date,
   data: string,
@@ -19,7 +48,7 @@ export type ParseTokenFns = Record<string, ParseTokenFn>;
 export const defaultParseTokenFns: ParseTokenFns = {
   D: do_nothing,
   F: function(dateObj: Date, monthName: string, locale: Locale) {
-    dateObj.setMonth(locale.months.longhand.indexOf(monthName));
+    monthStrToDate(monthName, false, locale, dateObj);
   },
   G: (dateObj: Date, hour: string) => {
     dateObj.setHours(parseFloat(hour));
@@ -27,8 +56,20 @@ export const defaultParseTokenFns: ParseTokenFns = {
   H: (dateObj: Date, hour: string) => {
     dateObj.setHours(parseFloat(hour));
   },
-  J: (dateObj: Date, day: string) => {
-    dateObj.setDate(parseFloat(day));
+  J: (dateObj: Date, day: string, locale: Locale) => {
+    const dayNumber = parseFloat(day);
+
+    // const newDate = new Date(dateObj.getTime());
+    // newDate.setDate(dayNumber);
+    // if (newDate.getDate() === dayNumber) {
+    //   dateObj.setDate(dayNumber);
+    // }
+
+    if (dayNumber >= 1
+      && dayNumber <= getDaysInMonth(dateObj.getMonth(), dateObj.getFullYear(), locale)) {
+
+        dateObj.setDate(dayNumber);
+    }
   },
   K: (dateObj: Date, amPM: string, locale: Locale) => {
     dateObj.setHours(
@@ -37,7 +78,7 @@ export const defaultParseTokenFns: ParseTokenFns = {
     );
   },
   M: function(dateObj: Date, shortMonth: string, locale: Locale) {
-    dateObj.setMonth(locale.months.shorthand.indexOf(shortMonth));
+    monthStrToDate(shortMonth, true, locale, dateObj);
   },
   S: (dateObj: Date, seconds: string) => {
     dateObj.setSeconds(parseFloat(seconds));
@@ -64,8 +105,8 @@ export const defaultParseTokenFns: ParseTokenFns = {
   },
   Z: (_: Date, ISODate: string) => new Date(ISODate),
 
-  d: (dateObj: Date, day: string) => {
-    dateObj.setDate(parseFloat(day));
+  d: (dateObj: Date, day: string, locale: Locale) => {
+    defaultParseTokenFns.J(dateObj, day, locale);
   },
   h: (dateObj: Date, hour: string) => {
     dateObj.setHours(parseFloat(hour));
@@ -73,15 +114,18 @@ export const defaultParseTokenFns: ParseTokenFns = {
   i: (dateObj: Date, minutes: string) => {
     dateObj.setMinutes(parseFloat(minutes));
   },
-  j: (dateObj: Date, day: string) => {
-    dateObj.setDate(parseFloat(day));
+  j: (dateObj: Date, day: string, locale: Locale) => {
+    defaultParseTokenFns.J(dateObj, day, locale);
   },
   l: do_nothing,
   m: (dateObj: Date, month: string) => {
-    dateObj.setMonth(parseFloat(month) - 1);
+    const monthNumber = parseFloat(month);
+    if (monthNumber >= 1 && monthNumber <= 12) {
+      dateObj.setMonth(monthNumber - 1);
+    }
   },
-  n: (dateObj: Date, month: string) => {
-    dateObj.setMonth(parseFloat(month) - 1);
+  n: (dateObj: Date, month: string, locale: Locale) => {
+    defaultParseTokenFns.m(dateObj, month, locale);
   },
   s: (dateObj: Date, seconds: string) => {
     dateObj.setSeconds(parseFloat(seconds));
@@ -119,6 +163,16 @@ export const defaultParseTokenRegexs: ParseTokenRegexs = {
   u: "(.+)",
   w: "(\\d\\d|\\d)",
   y: "(\\d{2})",
+};
+
+export type ParseTokenOrders = Record<string, number>;
+export const defaultParseTokenOrders: ParseTokenOrders = {
+  y: 1, //Year first to handle leapday dependant on year
+  Y: 1,
+  F: 2, //Month next to handle day dependant on month
+  m: 2,
+  n: 2,
+  M: 2,
 };
 
 export type FormatFns = Record<

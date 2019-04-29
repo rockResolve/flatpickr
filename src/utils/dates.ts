@@ -20,8 +20,8 @@ export const createDateFormatter = ({ config = defaults, l10n = english }) => (
       config.formatFns[c] && arr[i - 1] !== "\\"
         ? config.formatFns[c](dateObj, locale, config)
         : c !== "\\"
-        ? c
-        : ""
+          ? c
+          : ""
     )
     .join("");
 };
@@ -61,15 +61,14 @@ export const createDateParser = ({ config = defaults, l10n = english }) => (
     )
       parsedDate = new Date(date);
     else if (config && config.parseDate)
-      parsedDate = config.parseDate(date, format);
+      parsedDate = config.parseDate(date, format, locale);
     else {
       parsedDate =
         !config || !config.noCalendar
           ? new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0)
           : (new Date(new Date().setHours(0, 0, 0, 0)) as Date);
 
-      let matched,
-        ops: { fn: ParseTokenFn; val: string }[] = [];
+      const ops: { fn: ParseTokenFn; val: string; order: number }[] = [];
 
       for (let i = 0, matchIndex = 0, regexStr = ""; i < format.length; i++) {
         const token = format[i];
@@ -79,21 +78,22 @@ export const createDateParser = ({ config = defaults, l10n = english }) => (
         if (config.parseTokenRegexs[token] && !escaped) {
           regexStr += config.parseTokenRegexs[token];
           const match = new RegExp(regexStr).exec(date);
-          if (match && (matched = true)) {
-            ops[token !== "Y" ? "push" : "unshift"]({
+          if (match) {
+            ops.push({
               fn: config.parseTokenFns[token],
               val: match[++matchIndex],
+              order: config.parseTokenOrders[token] || 999,
             });
           }
         } else if (!isBackSlash) regexStr += "."; // don't really care
-
-        ops.forEach(
-          ({ fn, val }) =>
-            (parsedDate = fn(parsedDate as Date, val, locale) || parsedDate)
-        );
       }
 
-      parsedDate = matched ? parsedDate : undefined;
+      ops.sort((a, b) => a.order - b.order)
+        .forEach(({ fn, val }) => {
+          parsedDate = fn(parsedDate as Date, val, locale) || parsedDate;
+        });
+
+      parsedDate = ops.length > 0 ? parsedDate : undefined;
     }
   }
 

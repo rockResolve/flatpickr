@@ -175,7 +175,7 @@ describe("flatpickr", () => {
         expect(parsedDate.getDate()).toEqual(22);
       });
 
-      it('should parse "2016-10"', () => {
+      it('should parse year & month only: "2016-10"', () => {
         createInstance({
           defaultDate: "2016-10",
         });
@@ -197,6 +197,32 @@ describe("flatpickr", () => {
         expect(fp.selectedDates[0].getDate()).toEqual(20);
         expect(fp.selectedDates[0].getHours()).toEqual(3);
         expect(fp.selectedDates[0].getMinutes()).toEqual(30);
+      });
+
+      it('should parse shorthand month', () => {
+        createInstance({
+          dateFormat: "d M Y",
+          defaultDate: "16 Apr 2019",
+          enableTime: true,
+        });
+
+        expect(fp.selectedDates[0]).toBeDefined();
+        expect(fp.selectedDates[0].getFullYear()).toEqual(2019);
+        expect(fp.selectedDates[0].getMonth()).toEqual(3);
+        expect(fp.selectedDates[0].getDate()).toEqual(16);
+      });
+
+      it('should parse longhand month', () => {
+        createInstance({
+          dateFormat: "F j, Y",
+          defaultDate: "April 6th, 2019",
+          enableTime: true,
+        });
+
+        expect(fp.selectedDates[0]).toBeDefined();
+        expect(fp.selectedDates[0].getFullYear()).toEqual(2019);
+        expect(fp.selectedDates[0].getMonth()).toEqual(3);
+        expect(fp.selectedDates[0].getDate()).toEqual(6);
       });
 
       it("should parse ISO8601", () => {
@@ -248,6 +274,140 @@ describe("flatpickr", () => {
 
         expect(date.getTime()).toBeDefined();
         expect(date.getTime()).toEqual(Date.parse("2016-12-27T16:16:22.585Z"));
+      });
+
+
+      it('should parse leap days', () => {
+        createInstance({ dateFormat: "d M Y"});
+
+        //parseDate DefaultDate = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0);
+        //So how could this be tested during a leap year?
+        const thisYearLeapDay = new Date(new Date().getFullYear(), 1, 29, 0, 0, 0, 0);
+        expect(thisYearLeapDay.getDate()).not.toEqual(29);
+
+        fp.setDate("29 Feb 2012");
+        //Must parse tokens in significance order.
+        //Specifically it must parse year first to allow leap day. Must not parse token in format order
+        //Handled by unshift in parseDate
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-02-29 00:00").toString());
+      });
+
+
+      //allowInput plus input Element input event can trigger setDate() with invalid & partial strings
+      //The following tests reflect expected allowInput use cases
+
+      function dontConsoleWarnInvalidDates(fp: Instance) {
+        //TODO When invalid strings are possible (e.g. allowInput), should not console.warn
+
+        fp.config.errorHandler = (err) =>   // dont output console.warn to test output
+          !err.message.startsWith("Invalid date provided:") && fp.config.errorHandler(err);
+      }
+
+      it('should flag completely invalid dates by setting date as undefined', () => {
+        createInstance();
+
+        fp.setDate("2019-04-16");           // set initial value
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-16 00:00").toString());
+
+        dontConsoleWarnInvalidDates(fp);
+
+        fp.setDate("rubbish");
+
+        //NOTE Invalid strings dont leave flatPickr calendar, value unchanged, but set to undefined.
+        expect(fp.latestSelectedDateObj).toBeUndefined();
+        //To make invalid strings leave flatPickr unchanged, first validate with fp.parseDate()
+      });
+
+      it('should default missing date components to start of this year', () => {
+        createInstance();
+        //fp.config.dateFormat = "Y-m-d"   default
+
+        fp.setDate("2019-04-16");           // set initial value
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-16 00:00").toString());
+
+        fp.setDate("2010");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2010-01-01 00:00").toString());
+
+        fp.config.dateFormat = "d M Y";
+        const thisYear = new Date().getFullYear().toString();
+
+        fp.setDate("17");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date( thisYear + "-01-17 00:00").toString());
+
+        //This is a high value use case: being able to type just day & month, then tab out of control
+        fp.setDate("17 Apr");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date( thisYear + "-04-17 00:00").toString());
+      });
+
+      it('should flag all invalid date parts, by setting date as undefined', () => {
+        // indistingushable from completely invalid date
+        // see above "should flag completely invalid dates by setting date as undefined"
+
+        createInstance();
+        //fp.config.dateFormat = "Y-m-d"   default
+
+        dontConsoleWarnInvalidDates(fp);
+
+        fp.setDate("20");             // only date part is year, and it is invalid
+        expect(fp.latestSelectedDateObj).toBeUndefined();
+        //To make invalid strings leave flatPickr unchanged, only fp.setDate() after valid fp.parseDate()
+      });
+
+
+      it('should ignore invalid month numbers', () => {
+        createInstance();
+        //fp.config.dateFormat = "Y-m-d"   default
+
+        fp.setDate("2010-15");
+        //Javascript setMonth allows out of range monthValues
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2010-01-01 00:00").toString());
+      });
+
+      it('should ignore invalid month names', () => {
+        createInstance({ dateFormat: "Y M d"});
+
+        fp.setDate("2012 Xx ");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-01-01 00:00").toString());
+
+        fp.config.dateFormat = "d M Y";
+        fp.setDate("17 Xx 2010");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2010-01-17 00:00").toString());
+      });
+
+      it('should ignore invalid day numbers', () => {
+        createInstance();
+        //fp.config.dateFormat = "Y-m-d"   default
+
+        fp.setDate("2019-04-35");
+        //Javascript setDate allows out of range day values
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-01 00:00").toString());
+
+        fp.config.dateFormat = "d m Y";
+        fp.setDate("35 04 2019");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-04-01 00:00").toString());
+
+        fp.config.dateFormat = "d m Y";
+        fp.setDate("31 02 2019");
+        //formatDate should use known locale.daysInMonth, and process tokens in significance order
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2019-02-01 00:00").toString());
+      });
+
+
+      it('should allow wrong case month names', () => {
+        createInstance({ dateFormat: "Y M d"});
+
+        fp.setDate("2012 apr");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-04-01 00:00").toString());
+
+        fp.setDate("2013 FEB");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2013-02-01 00:00").toString());
+
+        fp.config.dateFormat = "Y F d";
+        fp.setDate("2012 april");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2012-04-01 00:00").toString());
+
+        fp.setDate("2013 FEBRUARY");
+        expect(fp.latestSelectedDateObj.toString()).toEqual(new Date("2013-02-01 00:00").toString());
       });
     });
 
@@ -530,6 +690,18 @@ describe("flatpickr", () => {
 
       fp.setDate("");
       expect(fp.selectedDates[0]).not.toBeDefined();
+    });
+
+    it("setDate (date, , , doSkipUpdateInputElement)", () => {
+      createInstance({
+        //allowInput: true,
+      });
+
+      fp.setDate("2016-10-21");
+      expect(fp.input.value).toEqual("2016-10-21");
+
+      fp.setDate("2019-04-13", undefined, undefined, true);
+      expect(fp.input.value).toEqual("2016-10-21");
     });
 
     it("has valid latestSelectedDateObj", () => {
