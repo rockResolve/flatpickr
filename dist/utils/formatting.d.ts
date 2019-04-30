@@ -1,0 +1,13 @@
+import { Locale } from "../types/locale";
+import { ParsedOptions } from "../types/options";
+export declare const monthToStr: (monthNumber: number, shorthand: boolean, locale: Locale) => string;
+export declare function getDaysInMonth(monthIndex: number, centuryYear: number, locale: Locale): number;
+export declare type ParseTokenFn = (date: Date, data: string, locale: Locale) => Date | void | undefined;
+export declare type ParseTokenFns = Record<string, ParseTokenFn>;
+export declare const defaultParseTokenFns: ParseTokenFns;
+export declare type ParseTokenRegexs = Record<string, string | ((locale: Locale) => string)>;
+export declare const defaultParseTokenRegexs: ParseTokenRegexs;
+export declare type ParseTokenOrders = Record<string, number>;
+export declare const defaultParseTokenOrders: ParseTokenOrders;
+export declare type FormatFns = Record<string, (date: Date, locale: Locale, options: ParsedOptions) => string | number>;
+export declare const defaultFormatFns: FormatFns;

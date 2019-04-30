@@ -2,7 +2,7 @@
 node_modules
 index.html
 coverage
-dist
+dist--is-needed-for-npm-install-of-git-url
 
 yarn.lock
 pnpm-lock.yaml
