@@ -2803,7 +2803,9 @@ flatpickr.localize = (l10n: CustomLocale) => {
   rebuildFormatParse();
 };
 
-/** append config properties. object & array properties are replaced, not appended */
+/** append config properties.
+ * Existing object & array properties are replaced, not appended to.
+ */
 flatpickr.setDefaults = (config: Options) => {
   // Ensure hooks are arrays
   HOOKS.forEach(hookName => {
