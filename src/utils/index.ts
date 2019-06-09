@@ -1,5 +1,6 @@
 export const pad = (number: string | number, digits = 2) =>
-  ("0".repeat(digits - 1) + number).slice(digits * -1);
+  (Array(digits).join("0") //IE compatible repeat
+  + number).slice(digits * -1);
 export const int = (bool: boolean) => (bool === true ? 1 : 0);
 
 /* istanbul ignore next */
