@@ -33,7 +33,8 @@
 
     var pad = function (number, digits) {
         if (digits === void 0) { digits = 2; }
-        return ("0".repeat(digits - 1) + number).slice(digits * -1);
+        return (Array(digits).join("0") //IE compatible repeat
+            + number).slice(digits * -1);
     };
     var int = function (bool) { return (bool === true ? 1 : 0); };
     /* istanbul ignore next */
@@ -2631,7 +2632,9 @@
         flatpickr.l10ns["default"] = __assign({}, flatpickr.l10ns["default"], l10n);
         rebuildFormatParse();
     };
-    /** append config properties. object & array properties are replaced, not appended */
+    /** append config properties.
+     * Existing object & array properties are replaced, not appended to.
+     */
     flatpickr.setDefaults = function (config) {
         // Ensure hooks are arrays
         HOOKS.forEach(function (hookName) {

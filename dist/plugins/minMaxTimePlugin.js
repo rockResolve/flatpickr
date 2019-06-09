@@ -6,7 +6,8 @@
 
   var pad = function (number, digits) {
       if (digits === void 0) { digits = 2; }
-      return ("0".repeat(digits - 1) + number).slice(digits * -1);
+      return (Array(digits).join("0") //IE compatible repeat
+          + number).slice(digits * -1);
   };
   var int = function (bool) { return (bool === true ? 1 : 0); };
 
